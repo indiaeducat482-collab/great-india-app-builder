@@ -1,0 +1,24 @@
+name: Great India App Builder Android Build
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        required: true
+        type: string
+      website_url:
+        required: true
+        type: string
+      app_name:
+        required: true
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "Build ID: ${{ inputs.build_id }}"
+          echo "Website: ${{ inputs.website_url }}"
+          echo "App: ${{ inputs.app_name }}"
+          echo "Android build hook is active."
+          echo "Production APK/AAB requires the Android/Capacitor project, signing secrets and artifact callback."
