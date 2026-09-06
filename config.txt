@@ -1,3 +1,0 @@
-APP_NAME=Your App Name
-WEBSITE_URL=https://example.com
-LOGO_FILE=app/src/main/res/drawable/app_logo.png
