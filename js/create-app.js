@@ -1,10 +1,503 @@
-import {auth,db,storage} from "./firebase-config.js";
-import {onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import {collection,addDoc,doc,getDoc,updateDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-import {ref,uploadBytes,getDownloadURL} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
-const $=s=>document.querySelector(s),id=new URLSearchParams(location.search).get("id");$("#logoutBtn")?.addEventListener("click",async()=>{await signOut(auth);location.href="./login.html"});
-let user;
-onAuthStateChanged(auth,async u=>{if(!u){location.href="./login.html";return}user=u;if(id)loadEdit(u.uid)});
-async function loadEdit(uid){const s=await getDoc(doc(db,"apps",id));if(!s.exists()||s.data().userId!==uid){$("#message").hidden=false;$("#message").textContent="App not found.";return}const a=s.data();$("#pageTitle").textContent="Edit App";$("#appName").value=a.appName||"";$("#websiteUrl").value=a.websiteUrl||"";$("#packageName").value=a.packageName||"";$("#version").value=a.version||"1.0.0";$("#theme").value=a.theme||"light"}
-$("#appForm").onsubmit=async e=>{e.preventDefault();const b=$("#saveBtn");b.disabled=true;b.textContent="Saving…";try{new URL($("#websiteUrl").value);const data={userId:user.uid,appName:$("#appName").value.trim(),websiteUrl:$("#websiteUrl").value.trim(),packageName:$("#packageName").value.trim(),version:$("#version").value.trim(),theme:$("#theme").value,status:"draft",updatedAt:serverTimestamp()};for(const [field,path] of [["logoFile","logos"],["iconFile","icons"]]){const f=$("#"+field).files[0];if(f){const r=ref(storage,`${path}/${user.uid}/${Date.now()}-${f.name}`);await uploadBytes(r,f);data[field==="logoFile"?"logoUrl":"iconUrl"]=await getDownloadURL(r)}}if(id)await updateDoc(doc(db,"apps",id),data);else{data.createdAt=serverTimestamp();await addDoc(collection(db,"apps"),data)}location.href="./my-apps.html"}catch(x){const m=$("#message");m.hidden=false;m.className="message error";m.textContent=x.message||"Could not save app."}finally{b.disabled=false;b.textContent="Save App"}};
-$("#previewBtn")?.addEventListener("click",()=>{try{alert(`App: ${$("#appName").value}\nWebsite: ${$("#websiteUrl").value}\nVersion: ${$("#version").value}`)}catch(e){}});
+```javascript
+import { auth, db, storage } from "./firebase-config.js";
+
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import {
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  updateDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
+
+
+/* =========================
+   HELPERS
+========================= */
+
+const $ = (selector) => document.querySelector(selector);
+
+const appForm = $("#appForm");
+const saveBtn = $("#saveBtn");
+const previewBtn = $("#previewBtn");
+const logoutBtn = $("#logoutBtn");
+const message = $("#message");
+
+const id = new URLSearchParams(window.location.search).get("id");
+
+let user = null;
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+function showMessage(text, type = "error") {
+  if (!message) return;
+
+  message.hidden = false;
+  message.className = `message ${type}`;
+  message.textContent = text;
+}
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+logoutBtn?.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    window.location.href = "./login.html";
+  } catch (error) {
+    showMessage(error.message || "Logout failed.");
+  }
+});
+
+
+/* =========================
+   AUTH
+========================= */
+
+onAuthStateChanged(auth, async (currentUser) => {
+
+  if (!currentUser) {
+    window.location.href = "./login.html";
+    return;
+  }
+
+  user = currentUser;
+
+  if (id) {
+    await loadEditApp(user.uid);
+  }
+
+});
+
+
+/* =========================
+   LOAD EDIT APP
+========================= */
+
+async function loadEditApp(uid) {
+
+  try {
+
+    const appRef = doc(db, "apps", id);
+
+    const snapshot = await getDoc(appRef);
+
+    if (!snapshot.exists()) {
+
+      showMessage("App not found.");
+
+      return;
+    }
+
+    const app = snapshot.data();
+
+    if (app.userId !== uid) {
+
+      showMessage("You do not have permission to edit this app.");
+
+      return;
+    }
+
+
+    /* Page title */
+
+    if ($("#pageTitle")) {
+      $("#pageTitle").textContent = "Edit App";
+    }
+
+
+    /* Form values */
+
+    if ($("#appName")) {
+      $("#appName").value = app.appName || "";
+    }
+
+    if ($("#websiteUrl")) {
+      $("#websiteUrl").value = app.websiteUrl || "";
+    }
+
+    if ($("#packageName")) {
+      $("#packageName").value = app.packageName || "";
+    }
+
+    if ($("#version")) {
+      $("#version").value = app.version || "1.0.0";
+    }
+
+    if ($("#theme")) {
+      $("#theme").value = app.theme || "light";
+    }
+
+  } catch (error) {
+
+    console.error("Load app error:", error);
+
+    showMessage(
+      error.message || "Could not load app."
+    );
+
+  }
+
+}
+
+
+/* =========================
+   SAVE APP
+========================= */
+
+appForm?.addEventListener("submit", async (event) => {
+
+  event.preventDefault();
+
+  if (!user) {
+
+    showMessage("Please login first.");
+
+    return;
+  }
+
+
+  /* Button */
+
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+  }
+
+
+  try {
+
+    /* =========================
+       READ FORM
+    ========================= */
+
+    const appName =
+      $("#appName")?.value.trim() || "";
+
+    const websiteUrl =
+      $("#websiteUrl")?.value.trim() || "";
+
+    const packageName =
+      $("#packageName")?.value.trim() || "";
+
+    const version =
+      $("#version")?.value.trim() || "1.0.0";
+
+    const theme =
+      $("#theme")?.value || "light";
+
+
+    /* =========================
+       VALIDATION
+    ========================= */
+
+    if (!appName) {
+      throw new Error("Please enter App Name.");
+    }
+
+    if (!websiteUrl) {
+      throw new Error("Please enter Website URL.");
+    }
+
+    try {
+      new URL(websiteUrl);
+    } catch {
+      throw new Error(
+        "Please enter a valid Website URL. Example: https://example.com"
+      );
+    }
+
+    if (!packageName) {
+      throw new Error("Please enter Package Name.");
+    }
+
+    if (!/^[a-z][a-z0-9]*(\.[a-z0-9]+)+$/.test(packageName)) {
+      throw new Error(
+        "Invalid Package Name. Example: com.greatindia.myapp"
+      );
+    }
+
+
+    /* =========================
+       BASIC APP DATA
+    ========================= */
+
+    const appData = {
+
+      userId: user.uid,
+
+      appName: appName,
+
+      websiteUrl: websiteUrl,
+
+      packageName: packageName,
+
+      version: version,
+
+      theme: theme,
+
+      status: "draft",
+
+      updatedAt: serverTimestamp()
+
+    };
+
+
+    /* =========================
+       SAVE FIRESTORE FIRST
+    ========================= */
+
+    let appRef;
+
+    if (id) {
+
+      /* EDIT */
+
+      appRef = doc(db, "apps", id);
+
+      await updateDoc(
+        appRef,
+        appData
+      );
+
+    } else {
+
+      /* NEW APP */
+
+      appData.createdAt =
+        serverTimestamp();
+
+      appRef =
+        await addDoc(
+          collection(db, "apps"),
+          appData
+        );
+    }
+
+
+    /* =========================
+       FILES
+    ========================= */
+
+    const logoFile =
+      $("#logoFile")?.files?.[0] || null;
+
+    const iconFile =
+      $("#iconFile")?.files?.[0] || null;
+
+
+    /*
+       IMPORTANT:
+
+       Firestore is already saved.
+
+       Therefore if no files are selected,
+       finish immediately.
+    */
+
+    if (!logoFile && !iconFile) {
+
+      window.location.href =
+        "./my-apps.html";
+
+      return;
+    }
+
+
+    /* =========================
+       UPLOAD MESSAGE
+    ========================= */
+
+    showMessage(
+      "App saved. Uploading files...",
+      "success"
+    );
+
+
+    /* =========================
+       UPLOAD LOGO + ICON
+       IN PARALLEL
+    ========================= */
+
+    const uploadJobs = [];
+
+
+    /* LOGO */
+
+    if (logoFile) {
+
+      const logoPath =
+        `logos/${user.uid}/${Date.now()}-${logoFile.name}`;
+
+      const logoRef =
+        ref(storage, logoPath);
+
+      const logoJob =
+        uploadBytes(
+          logoRef,
+          logoFile
+        )
+        .then(() =>
+          getDownloadURL(logoRef)
+        )
+        .then((url) => ({
+          logoUrl: url
+        }));
+
+      uploadJobs.push(logoJob);
+    }
+
+
+    /* ICON */
+
+    if (iconFile) {
+
+      const iconPath =
+        `icons/${user.uid}/${Date.now()}-${iconFile.name}`;
+
+      const iconRef =
+        ref(storage, iconPath);
+
+      const iconJob =
+        uploadBytes(
+          iconRef,
+          iconFile
+        )
+        .then(() =>
+          getDownloadURL(iconRef)
+        )
+        .then((url) => ({
+          iconUrl: url
+        }));
+
+      uploadJobs.push(iconJob);
+    }
+
+
+    /* =========================
+       WAIT FOR ALL UPLOADS
+    ========================= */
+
+    const uploadedFiles =
+      await Promise.all(uploadJobs);
+
+
+    /* =========================
+       COMBINE URLS
+    ========================= */
+
+    const fileData =
+      Object.assign(
+        {},
+        ...uploadedFiles
+      );
+
+
+    /* =========================
+       UPDATE FIRESTORE
+    ========================= */
+
+    await updateDoc(
+      appRef,
+      {
+        ...fileData,
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+
+    /* =========================
+       FINISHED
+    ========================= */
+
+    window.location.href =
+      "./my-apps.html";
+
+
+  } catch (error) {
+
+    console.error(
+      "Save App Error:",
+      error
+    );
+
+    showMessage(
+      error.message ||
+      "Could not save app."
+    );
+
+  } finally {
+
+    if (saveBtn) {
+
+      saveBtn.disabled = false;
+
+      saveBtn.textContent =
+        "Save App";
+    }
+
+  }
+
+});
+
+
+/* =========================
+   PREVIEW
+========================= */
+
+previewBtn?.addEventListener(
+  "click",
+  () => {
+
+    try {
+
+      const appName =
+        $("#appName")?.value || "";
+
+      const websiteUrl =
+        $("#websiteUrl")?.value || "";
+
+      const packageName =
+        $("#packageName")?.value || "";
+
+      const version =
+        $("#version")?.value || "";
+
+
+      alert(
+        `App: ${appName}\n` +
+        `Website: ${websiteUrl}\n` +
+        `Package: ${packageName}\n` +
+        `Version: ${version}`
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Preview error:",
+        error
+      );
+
+    }
+
+  }
+);
+```
