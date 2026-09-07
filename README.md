@@ -22,3 +22,7 @@ Security:
 - Do not expose a Firebase service-account key in GitHub Pages.
 - The Admin email in frontend/rules is only a gate; production-grade admin authorization should use Firebase custom claims.
 - Firestore deletion does not delete the Firebase Authentication account. Full Auth account deletion requires a trusted server/Cloud Function using Firebase Admin SDK.
+
+
+## Admin Login
+Use `admin-login.html` or the **🛡️ Admin Login** button on the main site. Admin access is restricted to `admin@greatindia.technology` in the frontend check; the Firebase account must also exist.
