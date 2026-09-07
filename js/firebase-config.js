@@ -1,6 +1,12 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+import { getAuth } from
+  "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import { getFirestore } from
+  "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyCeI6dOKnC2zbt8QD8WQfERLkNYnGuf11g",
@@ -12,6 +18,23 @@ const firebaseConfig = {
   measurementId: "G-NZZSMXN356"
 };
 
-const app = initializeApp(firebaseConfig);
+
+let app;
+
+try {
+
+  app = initializeApp(firebaseConfig);
+
+} catch(error) {
+
+  console.error("Firebase initialization failed:", error);
+
+  throw error;
+}
+
+
 export const auth = getAuth(app);
+
 export const db = getFirestore(app);
+
+export default app;
