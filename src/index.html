@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Great India App Builder</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="top"><b>Great India App Builder</b><span id="userInfo"></span><button id="logout" class="ghost hidden">Logout</button></header>
+<main>
+<section id="authView" class="card">
+  <h1>Build your Android app</h1>
+  <p>Create an account, add your website details, and save your app project.</p>
+  <div class="tabs"><button id="loginTab">Login</button><button id="signupTab">Sign Up</button></div>
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button id="authBtn">Login</button>
+  <button id="googleBtn" class="secondary">Continue with Google</button>
+  <p id="authMsg"></p>
+</section>
+
+<section id="appView" class="hidden">
+  <div class="hero"><h1>Dashboard</h1><p>Create and manage your Android app projects.</p></div>
+  <div class="grid">
+    <div class="card">
+      <h2>Create App</h2>
+      <form id="appForm">
+        <input id="appName" required placeholder="App Name">
+        <input id="websiteUrl" required type="url" placeholder="https://example.com">
+        <input id="packageName" required placeholder="com.greatindia.myapp">
+        <input id="version" value="1.0.0" placeholder="Version">
+        <textarea id="description" placeholder="App description"></textarea>
+        <button type="submit">Save App</button>
+        <button type="button" id="buildBtn" class="secondary">Build APK</button>
+        <p id="appMsg"></p>
+      </form>
+    </div>
+    <div class="card">
+      <h2>My Apps</h2>
+      <div id="apps"></div>
+    </div>
+  </div>
+</section>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
