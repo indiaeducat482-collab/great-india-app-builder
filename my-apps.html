@@ -1,10 +1,453 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Apps | Great India App Builder</title>
-<style>body{margin:0;background:#f4f7fb;font-family:system-ui;color:#172033}.wrap{max-width:1050px;margin:auto;padding:25px}.top{display:flex;justify-content:space-between;align-items:center}.top a{font-weight:800;color:#087f5b}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px}.card{background:#fff;border:1px solid #e2e7ee;border-radius:16px;padding:17px}.logo{width:58px;height:58px;border-radius:12px;object-fit:cover;background:#edf1f6}.btn{display:block;text-align:center;background:#087f5b;color:#fff;padding:11px;border-radius:9px;text-decoration:none;font-weight:900;margin-top:10px}.muted{color:#697586;font-size:13px}</style></head><body><main class="wrap"><div class="top"><h1>📱 My Apps</h1><a href="index.html">← Builder</a></div><p class="muted">आपके द्वारा बनाए गए सभी APK builds यहाँ सेव रहेंगे.</p><div id="list">Loading…</div></main>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>My Apps | Great India App Builder</title>
+
+<style>
+body{
+  margin:0;
+  background:#f4f7fb;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:#172033
+}
+
+.wrap{
+  max-width:1050px;
+  margin:auto;
+  padding:25px
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px
+}
+
+.top a{
+  font-weight:800;
+  color:#087f5b;
+  text-decoration:none
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:15px
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e2e7ee;
+  border-radius:16px;
+  padding:17px;
+  box-shadow:0 2px 8px rgba(0,0,0,.04)
+}
+
+.logo{
+  width:58px;
+  height:58px;
+  border-radius:12px;
+  object-fit:cover;
+  background:#edf1f6;
+  display:block
+}
+
+.btn{
+  display:block;
+  text-align:center;
+  background:#087f5b;
+  color:#fff;
+  padding:11px;
+  border-radius:9px;
+  text-decoration:none;
+  font-weight:900;
+  margin-top:10px
+}
+
+.btn.blue{
+  background:#1769aa
+}
+
+.muted{
+  color:#697586;
+  font-size:13px;
+  line-height:1.6
+}
+
+.status{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:800;
+  margin-top:7px
+}
+
+.status.ready{
+  background:#dff7eb;
+  color:#087f5b
+}
+
+.status.building{
+  background:#fff3cd;
+  color:#946200
+}
+
+.status.failed{
+  background:#ffe3e3;
+  color:#c92a2a
+}
+
+.empty{
+  text-align:center;
+  padding:40px 20px
+}
+
+@media(max-width:600px){
+  .wrap{
+    padding:15px
+  }
+
+  .top{
+    align-items:flex-start
+  }
+
+  h1{
+    font-size:24px
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+  <div class="top">
+    <h1>📱 My Apps</h1>
+    <a href="index.html">← Builder</a>
+  </div>
+
+  <p class="muted">
+    आपके द्वारा बनाए गए सभी Apps और APK builds यहाँ दिखाई देंगे।
+  </p>
+
+  <div id="list" class="grid">
+    <div class="card">Loading…</div>
+  </div>
+
+</main>
+
 <script type="module">
-import{auth,db}from"./js/firebase-config.js";import{onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";import{collection,query,where,getDocs,orderBy}from"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-const list=document.getElementById("list"),esc=x=>String(x||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-onAuthStateChanged(auth,async u=>{if(!u){location.href="login.html";return}try{
-const s=await getDocs(query(collection(db,"appHistory"),where("uid","==",u.uid),orderBy("createdAt","desc")));
-if(s.empty){list.innerHTML="<div class='card'>अभी कोई APK नहीं बना है.</div>";return}
-list.innerHTML="";s.forEach(x=>{const d=x.data(),el=document.createElement("div");el.className="card";const date=d.createdAt?.toDate?d.createdAt.toDate().toLocaleString():"";el.innerHTML=`<img class="logo" src="${d.logoData||""}" onerror="this.style.display='none'"><h2>${esc(d.name)}</h2><div class="muted">${esc(d.targetUrl)}<br>${esc(date)}<br>Status: ${esc(d.status||"queued")}</div>${d.apkUrl?`<a class="btn" href="${esc(d.apkUrl)}" target="_blank">⬇️ Download APK</a>`:"<div class='muted' style='margin-top:10px'>Build status: APK URL मिलने पर यहाँ Download दिखाई देगा.</div>"}`;list.appendChild(el)})}
-catch(e){list.innerHTML="<div class='card'>❌ "+esc(e.message)+"</div>"}});</script></body></html>
+
+import {
+  auth,
+  db
+} from "./js/firebase-config.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import {
+  collection,
+  query,
+  where,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+
+const list = document.getElementById("list");
+
+const SUPABASE_URL =
+  "https://rpzmnfvtfikiabowjnzj.supabase.co";
+
+const esc = x =>
+  String(x ?? "").replace(
+    /[&<>"']/g,
+    c => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[c])
+  );
+
+
+function statusText(status){
+  status = String(status || "").toLowerCase();
+
+  if(
+    status === "ready" ||
+    status === "completed" ||
+    status === "success"
+  ){
+    return {
+      text:"✅ APK Ready",
+      cls:"ready"
+    };
+  }
+
+  if(
+    status === "failed" ||
+    status === "error"
+  ){
+    return {
+      text:"❌ Build Failed",
+      cls:"failed"
+    };
+  }
+
+  return {
+    text:"⏳ Building APK…",
+    cls:"building"
+  };
+}
+
+
+async function checkBuild(buildId){
+
+  if(!buildId) return null;
+
+  try{
+
+    const url =
+      SUPABASE_URL +
+      "/functions/v1/build-status-v3?build_id=" +
+      encodeURIComponent(buildId) +
+      "&t=" +
+      Date.now();
+
+    const res = await fetch(url,{
+      method:"GET",
+      cache:"no-store"
+    });
+
+    if(!res.ok) return null;
+
+    const data = await res.json();
+
+    if(!data || !data.ok) return null;
+
+    return data;
+
+  }catch(e){
+
+    console.warn("Build status error:",e);
+
+    return null;
+  }
+}
+
+
+async function loadApps(){
+
+  const u = auth.currentUser;
+
+  if(!u){
+    location.href="login.html";
+    return;
+  }
+
+  try{
+
+    const snap = await getDocs(
+      query(
+        collection(db,"appHistory"),
+        where("uid","==",u.uid)
+      )
+    );
+
+    if(snap.empty){
+
+      list.innerHTML = `
+        <div class="card empty">
+          <h2>📱 अभी कोई App नहीं है</h2>
+          <p class="muted">
+            Builder से अपना पहला App बनाइए।
+          </p>
+          <a class="btn" href="index.html">
+            + Create App
+          </a>
+        </div>
+      `;
+
+      return;
+    }
+
+
+    const apps = snap.docs.map(docSnap => ({
+      id:docSnap.id,
+      ...docSnap.data()
+    }));
+
+
+    apps.sort((a,b)=>{
+
+      const ad =
+        a.createdAt?.toMillis ?
+        a.createdAt.toMillis() :
+        0;
+
+      const bd =
+        b.createdAt?.toMillis ?
+        b.createdAt.toMillis() :
+        0;
+
+      return bd-ad;
+    });
+
+
+    list.innerHTML = "";
+
+
+    for(const app of apps){
+
+      let build = null;
+
+      if(app.buildId){
+
+        build = await checkBuild(app.buildId);
+
+        if(build){
+
+          if(build.apk_url){
+
+            app.apkUrl = build.apk_url;
+            app.status = "ready";
+
+          }else{
+
+            app.status =
+              String(build.status || "queued").toLowerCase();
+          }
+        }
+      }
+
+
+      const state = statusText(app.status);
+
+      const date =
+        app.createdAt?.toDate ?
+        app.createdAt.toDate().toLocaleString() :
+        "";
+
+
+      const logo =
+        app.logoData ||
+        app.logo_data ||
+        "";
+
+
+      const card =
+        document.createElement("div");
+
+      card.className="card";
+
+
+      card.innerHTML = `
+
+        ${
+          logo
+          ?
+          `<img
+             class="logo"
+             src="${esc(logo)}"
+             alt="App Logo"
+             onerror="this.style.display='none'"
+           >`
+          :
+          `<div class="logo"></div>`
+        }
+
+        <h2>${esc(app.name || "My App")}</h2>
+
+        <div class="muted">
+          🌐 ${esc(app.targetUrl || app.target_url || "")}
+          <br>
+          📅 ${esc(date)}
+        </div>
+
+        <div class="status ${state.cls}">
+          ${state.text}
+        </div>
+
+        ${
+          app.apkUrl
+          ?
+          `
+          <a
+            class="btn"
+            href="${esc(app.apkUrl)}"
+            target="_blank"
+            rel="noopener"
+          >
+            ⬇️ Download APK
+          </a>
+          `
+          :
+          `
+          <div
+            class="muted"
+            style="margin-top:12px"
+          >
+            APK तैयार होने के बाद
+            Download button यहाँ दिखाई देगा।
+          </div>
+          `
+        }
+
+      `;
+
+
+      list.appendChild(card);
+    }
+
+  }catch(e){
+
+    console.error(e);
+
+    list.innerHTML = `
+      <div class="card">
+        ❌ ${esc(e.message)}
+      </div>
+    `;
+  }
+}
+
+
+onAuthStateChanged(auth, async user => {
+
+  if(!user){
+
+    location.href="login.html";
+    return;
+  }
+
+  await loadApps();
+
+
+  /*
+   * हर 10 सेकंड में status check
+   * ताकि APK ready होते ही Download दिखाई दे।
+   */
+
+  setInterval(async ()=>{
+
+    if(auth.currentUser){
+      await loadApps();
+    }
+
+  },10000);
+
+});
+
+</script>
+
+</body>
+</html>
