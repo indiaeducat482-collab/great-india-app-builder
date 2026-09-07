@@ -22,33 +22,32 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
 
 
-/* =========================
-   HELPERS
-========================= */
-
 const $ = (selector) => document.querySelector(selector);
 
-const appForm = $("#appForm");
-const saveBtn = $("#saveBtn");
-const previewBtn = $("#previewBtn");
-const logoutBtn = $("#logoutBtn");
-const message = $("#message");
+const form = $("#appForm");
+const saveButton = $("#saveBtn");
+const messageBox = $("#message");
 
-const id = new URLSearchParams(window.location.search).get("id");
+const appId =
+  new URLSearchParams(window.location.search).get("id");
 
-let user = null;
+let currentUser = null;
 
 
 /* =========================
    MESSAGE
 ========================= */
 
-function showMessage(text, type = "error") {
-  if (!message) return;
+function showMessage(text, type) {
+  if (!messageBox) return;
 
-  message.hidden = false;
-  message.className = `message ${type}`;
-  message.textContent = text;
+  messageBox.hidden = false;
+  messageBox.className =
+    type === "success"
+      ? "message success"
+      : "message error";
+
+  messageBox.textContent = text;
 }
 
 
@@ -56,100 +55,105 @@ function showMessage(text, type = "error") {
    LOGOUT
 ========================= */
 
-logoutBtn?.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    window.location.href = "./login.html";
-  } catch (error) {
-    showMessage(error.message || "Logout failed.");
-  }
-});
+const logoutButton = $("#logoutBtn");
+
+if (logoutButton) {
+  logoutButton.addEventListener("click", async function () {
+
+    try {
+      await signOut(auth);
+      window.location.href = "./login.html";
+
+    } catch (error) {
+      showMessage(error.message, "error");
+    }
+
+  });
+}
 
 
 /* =========================
-   AUTH
+   LOGIN CHECK
 ========================= */
 
-onAuthStateChanged(auth, async (currentUser) => {
+onAuthStateChanged(auth, async function (user) {
 
-  if (!currentUser) {
+  if (!user) {
     window.location.href = "./login.html";
     return;
   }
 
-  user = currentUser;
+  currentUser = user;
 
-  if (id) {
-    await loadEditApp(user.uid);
+  if (appId) {
+    await loadApp(appId, user.uid);
   }
 
 });
 
 
 /* =========================
-   LOAD EDIT APP
+   LOAD APP FOR EDIT
 ========================= */
 
-async function loadEditApp(uid) {
+async function loadApp(id, uid) {
 
   try {
 
-    const appRef = doc(db, "apps", id);
+    const appReference =
+      doc(db, "apps", id);
 
-    const snapshot = await getDoc(appRef);
+    const snapshot =
+      await getDoc(appReference);
 
     if (!snapshot.exists()) {
-
-      showMessage("App not found.");
-
+      showMessage("App not found.", "error");
       return;
     }
 
-    const app = snapshot.data();
+    const data = snapshot.data();
 
-    if (app.userId !== uid) {
-
-      showMessage("You do not have permission to edit this app.");
-
+    if (data.userId !== uid) {
+      showMessage(
+        "You do not have permission to edit this app.",
+        "error"
+      );
       return;
     }
-
-
-    /* Page title */
 
     if ($("#pageTitle")) {
       $("#pageTitle").textContent = "Edit App";
     }
 
-
-    /* Form values */
-
     if ($("#appName")) {
-      $("#appName").value = app.appName || "";
+      $("#appName").value = data.appName || "";
     }
 
     if ($("#websiteUrl")) {
-      $("#websiteUrl").value = app.websiteUrl || "";
+      $("#websiteUrl").value = data.websiteUrl || "";
     }
 
     if ($("#packageName")) {
-      $("#packageName").value = app.packageName || "";
+      $("#packageName").value = data.packageName || "";
     }
 
     if ($("#version")) {
-      $("#version").value = app.version || "1.0.0";
+      $("#version").value =
+        data.version || "1.0.0";
     }
 
     if ($("#theme")) {
-      $("#theme").value = app.theme || "light";
+      $("#theme").value =
+        data.theme || "light";
     }
 
   } catch (error) {
 
-    console.error("Load app error:", error);
+    console.error(error);
 
     showMessage(
-      error.message || "Could not load app."
+      error.message || "Could not load app.",
+      "error"
     );
 
   }
@@ -158,321 +162,320 @@ async function loadEditApp(uid) {
 
 
 /* =========================
-   SAVE APP
+   SAVE
 ========================= */
 
-appForm?.addEventListener("submit", async (event) => {
+if (form) {
 
-  event.preventDefault();
+  form.addEventListener("submit", async function (event) {
 
-  if (!user) {
+    event.preventDefault();
 
-    showMessage("Please login first.");
-
-    return;
-  }
-
-
-  /* Button */
-
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.textContent = "Saving...";
-  }
-
-
-  try {
-
-    /* =========================
-       READ FORM
-    ========================= */
-
-    const appName =
-      $("#appName")?.value.trim() || "";
-
-    const websiteUrl =
-      $("#websiteUrl")?.value.trim() || "";
-
-    const packageName =
-      $("#packageName")?.value.trim() || "";
-
-    const version =
-      $("#version")?.value.trim() || "1.0.0";
-
-    const theme =
-      $("#theme")?.value || "light";
-
-
-    /* =========================
-       VALIDATION
-    ========================= */
-
-    if (!appName) {
-      throw new Error("Please enter App Name.");
+    if (!currentUser) {
+      showMessage(
+        "Please login first.",
+        "error"
+      );
+      return;
     }
 
-    if (!websiteUrl) {
-      throw new Error("Please enter Website URL.");
+    if (saveButton) {
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving...";
     }
 
     try {
-      new URL(websiteUrl);
-    } catch {
-      throw new Error(
-        "Please enter a valid Website URL. Example: https://example.com"
-      );
-    }
 
-    if (!packageName) {
-      throw new Error("Please enter Package Name.");
-    }
+      /* FORM VALUES */
 
-    if (!/^[a-z][a-z0-9]*(\.[a-z0-9]+)+$/.test(packageName)) {
-      throw new Error(
-        "Invalid Package Name. Example: com.greatindia.myapp"
-      );
-    }
+      const appName =
+        $("#appName").value.trim();
 
+      const websiteUrl =
+        $("#websiteUrl").value.trim();
 
-    /* =========================
-       BASIC APP DATA
-    ========================= */
+      const packageName =
+        $("#packageName").value.trim();
 
-    const appData = {
+      const version =
+        $("#version").value.trim() || "1.0.0";
 
-      userId: user.uid,
-
-      appName: appName,
-
-      websiteUrl: websiteUrl,
-
-      packageName: packageName,
-
-      version: version,
-
-      theme: theme,
-
-      status: "draft",
-
-      updatedAt: serverTimestamp()
-
-    };
+      const theme =
+        $("#theme").value || "light";
 
 
-    /* =========================
-       SAVE FIRESTORE FIRST
-    ========================= */
+      /* VALIDATION */
 
-    let appRef;
+      if (!appName) {
+        throw new Error("Please enter App Name.");
+      }
 
-    if (id) {
+      if (!websiteUrl) {
+        throw new Error("Please enter Website URL.");
+      }
 
-      /* EDIT */
+      try {
+        new URL(websiteUrl);
+      } catch (error) {
+        throw new Error(
+          "Please enter a valid Website URL."
+        );
+      }
 
-      appRef = doc(db, "apps", id);
+      if (!packageName) {
+        throw new Error("Please enter Package Name.");
+      }
 
-      await updateDoc(
-        appRef,
-        appData
-      );
 
-    } else {
+      /* =========================
+         SAVE DATA
+      ========================= */
+
+      const appData = {
+        userId: currentUser.uid,
+        appName: appName,
+        websiteUrl: websiteUrl,
+        packageName: packageName,
+        version: version,
+        theme: theme,
+        status: "draft",
+        updatedAt: serverTimestamp()
+      };
+
+
+      let appReference;
+
 
       /* NEW APP */
 
-      appData.createdAt =
-        serverTimestamp();
+      if (!appId) {
 
-      appRef =
-        await addDoc(
-          collection(db, "apps"),
+        appData.createdAt =
+          serverTimestamp();
+
+        appReference =
+          await addDoc(
+            collection(db, "apps"),
+            appData
+          );
+
+      }
+
+      /* EDIT APP */
+
+      else {
+
+        appReference =
+          doc(db, "apps", appId);
+
+        await updateDoc(
+          appReference,
           appData
         );
-    }
+
+      }
 
 
-    /* =========================
-       FILES
-    ========================= */
+      /* =========================
+         CHECK FILES
+      ========================= */
 
-    const logoFile =
-      $("#logoFile")?.files?.[0] || null;
+      const logo =
+        $("#logoFile") &&
+        $("#logoFile").files.length
+          ? $("#logoFile").files[0]
+          : null;
 
-    const iconFile =
-      $("#iconFile")?.files?.[0] || null;
+      const icon =
+        $("#iconFile") &&
+        $("#iconFile").files.length
+          ? $("#iconFile").files[0]
+          : null;
 
 
-    /*
-       IMPORTANT:
+      /* NO FILE */
 
-       Firestore is already saved.
+      if (!logo && !icon) {
 
-       Therefore if no files are selected,
-       finish immediately.
-    */
+        window.location.href =
+          "./my-apps.html";
 
-    if (!logoFile && !iconFile) {
+        return;
+      }
+
+
+      /* =========================
+         UPLOAD FILES
+      ========================= */
+
+      showMessage(
+        "App saved. Uploading files...",
+        "success"
+      );
+
+
+      const uploadTasks = [];
+
+
+      /* LOGO */
+
+      if (logo) {
+
+        const logoReference =
+          ref(
+            storage,
+            "logos/" +
+            currentUser.uid +
+            "/" +
+            Date.now() +
+            "-" +
+            logo.name
+          );
+
+        uploadTasks.push(
+          uploadBytes(
+            logoReference,
+            logo
+          ).then(async function () {
+
+            const url =
+              await getDownloadURL(
+                logoReference
+              );
+
+            return {
+              logoUrl: url
+            };
+
+          })
+        );
+
+      }
+
+
+      /* ICON */
+
+      if (icon) {
+
+        const iconReference =
+          ref(
+            storage,
+            "icons/" +
+            currentUser.uid +
+            "/" +
+            Date.now() +
+            "-" +
+            icon.name
+          );
+
+        uploadTasks.push(
+          uploadBytes(
+            iconReference,
+            icon
+          ).then(async function () {
+
+            const url =
+              await getDownloadURL(
+                iconReference
+              );
+
+            return {
+              iconUrl: url
+            };
+
+          })
+        );
+
+      }
+
+
+      /* WAIT FOR UPLOADS */
+
+      const uploaded =
+        await Promise.all(uploadTasks);
+
+
+      /* CREATE FILE DATA */
+
+      const fileData = {};
+
+      uploaded.forEach(function (item) {
+
+        if (item.logoUrl) {
+          fileData.logoUrl =
+            item.logoUrl;
+        }
+
+        if (item.iconUrl) {
+          fileData.iconUrl =
+            item.iconUrl;
+        }
+
+      });
+
+
+      /* UPDATE URLS */
+
+      await updateDoc(
+        appReference,
+        {
+          ...fileData,
+          updatedAt: serverTimestamp()
+        }
+      );
+
+
+      /* DONE */
 
       window.location.href =
         "./my-apps.html";
 
-      return;
-    }
 
+    } catch (error) {
 
-    /* =========================
-       UPLOAD MESSAGE
-    ========================= */
-
-    showMessage(
-      "App saved. Uploading files...",
-      "success"
-    );
-
-
-    /* =========================
-       UPLOAD LOGO + ICON
-       IN PARALLEL
-    ========================= */
-
-    const uploadJobs = [];
-
-
-    /* LOGO */
-
-    if (logoFile) {
-
-      const logoPath =
-        `logos/${user.uid}/${Date.now()}-${logoFile.name}`;
-
-      const logoRef =
-        ref(storage, logoPath);
-
-      const logoJob =
-        uploadBytes(
-          logoRef,
-          logoFile
-        )
-        .then(() =>
-          getDownloadURL(logoRef)
-        )
-        .then((url) => ({
-          logoUrl: url
-        }));
-
-      uploadJobs.push(logoJob);
-    }
-
-
-    /* ICON */
-
-    if (iconFile) {
-
-      const iconPath =
-        `icons/${user.uid}/${Date.now()}-${iconFile.name}`;
-
-      const iconRef =
-        ref(storage, iconPath);
-
-      const iconJob =
-        uploadBytes(
-          iconRef,
-          iconFile
-        )
-        .then(() =>
-          getDownloadURL(iconRef)
-        )
-        .then((url) => ({
-          iconUrl: url
-        }));
-
-      uploadJobs.push(iconJob);
-    }
-
-
-    /* =========================
-       WAIT FOR ALL UPLOADS
-    ========================= */
-
-    const uploadedFiles =
-      await Promise.all(uploadJobs);
-
-
-    /* =========================
-       COMBINE URLS
-    ========================= */
-
-    const fileData =
-      Object.assign(
-        {},
-        ...uploadedFiles
+      console.error(
+        "SAVE ERROR:",
+        error
       );
 
+      showMessage(
+        error.message ||
+        "Could not save app.",
+        "error"
+      );
 
-    /* =========================
-       UPDATE FIRESTORE
-    ========================= */
+    } finally {
 
-    await updateDoc(
-      appRef,
-      {
-        ...fileData,
-
-        updatedAt:
-          serverTimestamp()
+      if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent =
+          "Save App";
       }
-    );
 
-
-    /* =========================
-       FINISHED
-    ========================= */
-
-    window.location.href =
-      "./my-apps.html";
-
-
-  } catch (error) {
-
-    console.error(
-      "Save App Error:",
-      error
-    );
-
-    showMessage(
-      error.message ||
-      "Could not save app."
-    );
-
-  } finally {
-
-    if (saveBtn) {
-
-      saveBtn.disabled = false;
-
-      saveBtn.textContent =
-        "Save App";
     }
 
-  }
+  });
 
-});
+}
 
 
 /* =========================
    PREVIEW
 ========================= */
 
-previewBtn?.addEventListener(
-  "click",
-  () => {
+const previewButton =
+  $("#previewBtn");
 
-    try {
+if (previewButton) {
 
-      const appName =
+  previewButton.addEventListener(
+    "click",
+    function () {
+
+      const name =
         $("#appName")?.value || "";
 
-      const websiteUrl =
+      const website =
         $("#websiteUrl")?.value || "";
 
       const packageName =
@@ -481,23 +484,15 @@ previewBtn?.addEventListener(
       const version =
         $("#version")?.value || "";
 
-
       alert(
-        `App: ${appName}\n` +
-        `Website: ${websiteUrl}\n` +
-        `Package: ${packageName}\n` +
-        `Version: ${version}`
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Preview error:",
-        error
+        "App: " + name +
+        "\nWebsite: " + website +
+        "\nPackage: " + packageName +
+        "\nVersion: " + version
       );
 
     }
+  );
 
-  }
-);
+}
 ```
