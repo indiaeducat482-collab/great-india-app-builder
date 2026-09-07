@@ -1,0 +1,14 @@
+import { auth, db, firebaseConfigured } from "./firebase-config.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+const $=s=>document.querySelector(s);
+function toast(t){const x=$("#toast");x.textContent=t;x.classList.add("show");setTimeout(()=>x.classList.remove("show"),3000)}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function initials(n="GI"){return n.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"GI"}
+$("#logoutBtn")?.addEventListener("click",async()=>{if(auth)await signOut(auth);location.href="./login.html"});
+$("#menuBtn")?.addEventListener("click",()=>document.querySelector(".sidebar")?.classList.toggle("mobile-open"));
+if(!firebaseConfigured){$("#appsGrid").innerHTML='<div class="empty-state"><strong>Firebase configuration required</strong><span>Paste your Firebase Web App config in <b>js/firebase-config.js</b>.</span></div>';}
+if(auth)onAuthStateChanged(auth,async u=>{if(!u){location.href="./login.html";return}if(firebaseConfigured)await load(u.uid)});
+async function load(uid){try{const s=await getDocs(query(collection(db,"apps"),where("userId","==",uid),orderBy("createdAt","desc")));const apps=s.docs.map(d=>({id:d.id,...d.data()}));if(!apps.length){$("#appsGrid").innerHTML='<div class="empty-state"><strong>You haven\'t created any apps yet.</strong><span><a class="text-link" href="./create-app.html">Create your first app →</a></span></div>';return}$("#appsGrid").innerHTML=apps.map(card).join("")}catch(e){console.error(e);$("#appsGrid").innerHTML='<div class="empty-state"><strong>Could not load your apps.</strong><span>Check Firestore configuration and security rules.</span></div>'}}
+function card(a){const logo=a.logoUrl?`<img class="app-logo" src="${esc(a.logoUrl)}" alt="">`:`<div class="app-logo">${esc(initials(a.appName))}</div>`;return `<article class="app-card"><div class="app-card-top">${logo}<span class="status-badge ${esc(a.status||"draft")}">${esc(a.status||"draft")}</span></div><h3>${esc(a.appName||"Untitled App")}</h3><p title="${esc(a.websiteUrl)}">${esc(a.websiteUrl||"No website URL")}</p><div class="card-actions"><a class="mini-btn primary" href="./app-details.html?id=${encodeURIComponent(a.id)}">Open</a><a class="mini-btn" href="./create-app.html?id=${encodeURIComponent(a.id)}">Edit</a><button class="mini-btn build-btn" data-id="${esc(a.id)}">Build</button></div></article>`}
+document.addEventListener("click",async e=>{const b=e.target.closest(".build-btn");if(b){b.disabled=true;b.textContent="Opening…";location.href=`./app-details.html?id=${encodeURIComponent(b.dataset.id)}&build=1`}});
