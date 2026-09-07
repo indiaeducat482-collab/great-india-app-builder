@@ -1,29 +1,9 @@
-// ================================================================
-// GREAT INDIA APP BUILDER — Firebase Web App Configuration
-// Paste the Firebase Web App config from Firebase Console below.
-// Never put Firebase Admin/service-account credentials here.
-// ================================================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
-
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
-  projectId: "YOUR_FIREBASE_PROJECT_ID",
-  storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID"
+  apiKey: "AIzaSyCeI6dOKnC2zbt8QD8WQfERLkNYnGuf11g",
+  authDomain: "great-india-app-builder.firebaseapp.com",
+  projectId: "great-india-app-builder",
+  storageBucket: "great-india-app-builder.firebasestorage.app",
+  messagingSenderId: "795673427755",
+  appId: "1:795673427755:web:0563a68216007e02834f6e",
+  measurementId: "G-NZZSMXN356"
 };
-
-export const firebaseConfigured = Object.values(firebaseConfig).every(v => v && !String(v).startsWith("YOUR_"));
-
-let app = null, auth = null, db = null, storage = null;
-if (firebaseConfigured) {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-}
-export { app, auth, db, storage, firebaseConfig };
