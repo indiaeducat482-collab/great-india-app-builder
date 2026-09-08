@@ -1,525 +1,485 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<title>Admin Login | Great India App Builder</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login - Great India Technology</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
 
 body{
-  margin:0;
   min-height:100vh;
-  background:#f4f7fb;
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-  color:#172033;
+  font-family:Arial,Helvetica,sans-serif;
+  background:linear-gradient(135deg,#0f172a,#1d4ed8);
   display:flex;
   align-items:center;
   justify-content:center;
   padding:20px;
 }
 
-.card{
-  width:min(430px,100%);
-  background:#fff;
-  border:1px solid #e2e7ee;
-  border-radius:20px;
-  padding:28px;
-  box-shadow:0 12px 35px #17203314;
-}
-
-.brand{
-  font-weight:900;
-  color:#087f5b;
-  font-size:20px;
-  margin-bottom:22px;
-}
-
-.shield{
-  text-align:center;
-  font-size:48px;
-  margin-bottom:8px;
-}
-
-h1{
-  text-align:center;
-  margin:0 0 6px;
-}
-
-.subtitle{
-  color:#697586;
-  text-align:center;
-}
-
-.field{
-  margin:16px 0;
-}
-
-.field label{
-  display:block;
-  font-size:13px;
-  font-weight:800;
-  margin-bottom:7px;
-}
-
-.field input{
+.login-box{
   width:100%;
-  height:48px;
-  border:1px solid #ccd4df;
-  border-radius:11px;
-  padding:0 12px;
-  font:inherit;
+  max-width:420px;
+  background:#fff;
+  border-radius:18px;
+  padding:32px;
+  box-shadow:0 20px 60px rgba(0,0,0,.30);
+}
+
+.logo{
+  text-align:center;
+  margin-bottom:25px;
+}
+
+.logo h1{
+  color:#1d4ed8;
+  font-size:25px;
+}
+
+.logo p{
+  color:#666;
+  margin-top:7px;
+  font-size:14px;
+}
+
+h2{
+  text-align:center;
+  color:#222;
+  margin-bottom:25px;
+}
+
+label{
+  display:block;
+  margin:15px 0 7px;
+  font-weight:bold;
+  color:#333;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  border:1px solid #d1d5db;
+  border-radius:9px;
+  font-size:15px;
   outline:none;
 }
 
-.field input:focus{
-  border-color:#087f5b;
-  box-shadow:0 0 0 3px #087f5b18;
+input:focus{
+  border-color:#2563eb;
+  box-shadow:0 0 0 2px rgba(37,99,235,.12);
 }
 
-.btn{
+button{
   width:100%;
-  height:48px;
+  margin-top:23px;
+  padding:14px;
   border:0;
-  border-radius:11px;
-  background:#087f5b;
+  border-radius:9px;
+  background:#2563eb;
   color:#fff;
-  font-weight:900;
-  font-size:15px;
+  font-size:16px;
+  font-weight:bold;
   cursor:pointer;
 }
 
-.btn:disabled{
-  opacity:.6;
+button:hover{
+  background:#1d4ed8;
+}
+
+button:disabled{
+  opacity:.65;
   cursor:not-allowed;
 }
 
-.msg{
-  margin:12px 0;
-  padding:11px;
-  border-radius:10px;
-  background:#fff0f2;
-  color:#9b1238;
+.message{
   display:none;
-  font-weight:700;
+  margin-top:16px;
+  padding:12px;
+  border-radius:8px;
+  text-align:center;
+  font-size:14px;
+}
+
+.error{
+  background:#fee2e2;
+  color:#b91c1c;
 }
 
 .success{
-  background:#effaf5;
-  color:#087f5b;
+  background:#dcfce7;
+  color:#166534;
 }
 
 .back{
   text-align:center;
-  margin-top:18px;
+  margin-top:20px;
 }
 
 .back a{
-  color:#087f5b;
-  font-weight:800;
+  color:#2563eb;
   text-decoration:none;
+  font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<main class="card">
+<div class="login-box">
 
-  <div class="brand">
-    🚀 Great India App Builder
+  <div class="logo">
+    <h1>Great India Technology</h1>
+    <p>Administrator Panel</p>
   </div>
 
-  <div class="shield">
-    🛡️
-  </div>
+  <h2>Admin Login</h2>
 
-  <h1>Admin Login</h1>
+  <form id="loginForm">
 
-  <p class="subtitle">
-    Admin panel access
-  </p>
+    <label for="email">Admin Email</label>
 
-  <div id="msg" class="msg"></div>
-
-  <form id="form">
-
-    <div class="field">
-
-      <label for="email">
-        Admin Email
-      </label>
-
-      <input
-        id="email"
-        type="email"
-        value="indiaeducat482@gmail.com"
-        autocomplete="username"
-        required
-      >
-
-    </div>
-
-    <div class="field">
-
-      <label for="password">
-        Password
-      </label>
-
-      <input
-        id="password"
-        type="password"
-        autocomplete="current-password"
-        required
-        placeholder="Enter admin password"
-      >
-
-    </div>
-
-    <button
-      id="btn"
-      class="btn"
-      type="submit"
+    <input
+      type="email"
+      id="email"
+      value="indiaeducat482@gmail.com"
+      autocomplete="username"
+      required
     >
-      Login as Admin
+
+    <label for="password">Password</label>
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Enter password"
+      autocomplete="current-password"
+      required
+    >
+
+    <button type="submit" id="loginBtn">
+      Login to Admin Panel
     </button>
 
   </form>
 
+  <div id="errorBox" class="message error"></div>
+  <div id="successBox" class="message success"></div>
+
   <div class="back">
-    <a href="index.html">
-      ← Back to App Builder
-    </a>
+    <a href="index.html">← Back to Website</a>
   </div>
 
-</main>
+</div>
 
 
 <script type="module">
 
-import {
-  auth,
-  db
-} from "./js/firebase-config.js";
+import { auth, db }
+from "./js/firebase-config.js";
 
 import {
   signInWithEmailAndPassword,
-  onAuthStateChanged,
   signOut
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 import {
   doc,
   getDoc
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-/* =========================
-   AUTHORIZED ADMIN
-========================= */
+/* ==========================================
+   ADMIN EMAIL
+========================================== */
 
-const ADMIN_EMAIL =
-  "indiaeducat482@gmail.com";
-
-
-const $ = id =>
-  document.getElementById(id);
+const ADMIN_EMAIL = "indiaeducat482@gmail.com";
 
 
-/* =========================
-   MESSAGE
-========================= */
+const form = document.getElementById("loginForm");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
 
-function showMessage(
-  text,
-  success = false
-){
+const errorBox = document.getElementById("errorBox");
+const successBox = document.getElementById("successBox");
 
-  const msg = $("msg");
 
-  msg.textContent = text;
+/* ==========================================
+   MESSAGE FUNCTIONS
+========================================== */
 
-  msg.className =
-    success
-      ? "msg success"
-      : "msg";
+function hideMessages(){
 
-  msg.style.display = "block";
+  errorBox.style.display = "none";
+  successBox.style.display = "none";
+
 }
 
 
-/* =========================
-   CHECK CURRENT LOGIN
-========================= */
+function showError(message){
 
-onAuthStateChanged(
-  auth,
-  user => {
+  errorBox.textContent = message;
+  errorBox.style.display = "block";
+  successBox.style.display = "none";
 
-    if (!user) return;
+}
 
-    const email =
-      String(
-        user.email || ""
-      )
-      .trim()
-      .toLowerCase();
 
-    if (
-      email ===
-      ADMIN_EMAIL.toLowerCase()
-    ){
+function showSuccess(message){
 
-      location.href =
-        "admin.html";
+  successBox.textContent = message;
+  successBox.style.display = "block";
+  errorBox.style.display = "none";
 
-    }
+}
+
+
+/* ==========================================
+   LOGIN
+========================================== */
+
+form.addEventListener("submit", async function(e){
+
+  e.preventDefault();
+
+  hideMessages();
+
+  const email =
+    emailInput.value.trim().toLowerCase();
+
+  const password =
+    passwordInput.value;
+
+
+  /* Check email */
+
+  if(email !== ADMIN_EMAIL.toLowerCase()){
+
+    showError(
+      "This account is not authorized as admin."
+    );
+
+    return;
 
   }
-);
 
 
-/* =========================
-   ADMIN LOGIN
-========================= */
+  if(!password){
 
-$("form").addEventListener(
-  "submit",
-  async event => {
+    showError(
+      "Please enter your admin password."
+    );
 
-    event.preventDefault();
+    return;
 
-    const btn =
-      $("btn");
-
-    const email =
-      $("email")
-        .value
-        .trim()
-        .toLowerCase();
-
-    const password =
-      $("password")
-        .value;
+  }
 
 
-    /* =========================
-       EMAIL AUTHORIZATION
-    ========================= */
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Logging in...";
 
-    if (
-      email !==
+
+  try{
+
+    /* Firebase Authentication */
+
+    const result =
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+
+    const user = result.user;
+
+
+    /* ======================================
+       FINAL ADMIN EMAIL CHECK
+    ====================================== */
+
+    if(
+      !user.email ||
+      user.email.toLowerCase() !==
       ADMIN_EMAIL.toLowerCase()
     ){
 
-      showMessage(
-        "❌ This account is not authorized as admin."
+      await signOut(auth);
+
+      showError(
+        "This account is not authorized as admin."
       );
+
+      loginBtn.disabled = false;
+      loginBtn.textContent =
+        "Login to Admin Panel";
 
       return;
 
     }
 
 
-    if (!password){
+    /* ======================================
+       CHECK FIRESTORE USER STATUS
+    ====================================== */
 
-      showMessage(
-        "❌ Please enter admin password."
-      );
+    try{
 
-      return;
+      const userRef =
+        doc(db,"users",user.uid);
 
-    }
-
-
-    btn.disabled = true;
-
-    btn.textContent =
-      "Checking...";
-
-    $("msg").style.display =
-      "none";
+      const userSnap =
+        await getDoc(userRef);
 
 
-    try {
+      if(userSnap.exists()){
 
-      /* =========================
-         FIREBASE AUTH
-      ========================= */
-
-      const result =
-        await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
+        const userData =
+          userSnap.data();
 
 
-      const user =
-        result.user;
-
-
-      /* =========================
-         FINAL EMAIL CHECK
-      ========================= */
-
-      const loggedEmail =
-        String(
-          user.email || ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-      if (
-        loggedEmail !==
-        ADMIN_EMAIL.toLowerCase()
-      ){
-
-        await signOut(auth);
-
-        throw new Error(
-          "This account is not authorized as admin."
-        );
-
-      }
-
-
-      /* =========================
-         OPTIONAL BLOCK CHECK
-      ========================= */
-
-      try {
-
-        const userDoc =
-          await getDoc(
-            doc(
-              db,
-              "users",
-              user.uid
-            )
-          );
-
-
-        if (
-          userDoc.exists() &&
-          userDoc.data().blocked === true
-        ){
+        if(userData.blocked === true){
 
           await signOut(auth);
 
-          throw new Error(
+          showError(
             "This admin account is blocked."
           );
 
+          loginBtn.disabled = false;
+          loginBtn.textContent =
+            "Login to Admin Panel";
+
+          return;
+
         }
 
-      } catch(profileError){
-
-        console.warn(
-          "Admin profile check:",
-          profileError
-        );
-
       }
 
+    }catch(firestoreError){
 
-      /* =========================
-         SUCCESS
-      ========================= */
+      /*
+        Firestore user document missing
+        should not stop Firebase admin login.
+      */
 
-      showMessage(
-        "✅ Admin login successful. Opening Admin Panel...",
-        true
+      console.log(
+        "Firestore status check:",
+        firestoreError
       );
 
-      btn.textContent =
-        "Opening Admin Panel...";
+    }
 
 
-      setTimeout(
-        () => {
+    /* ======================================
+       SUCCESS
+    ====================================== */
 
-          location.href =
-            "admin.html";
-
-        },
-        500
-      );
+    showSuccess(
+      "Login successful. Opening Admin Panel..."
+    );
 
 
-    } catch(error){
-
-      console.error(
-        "Admin Login Error:",
-        error
-      );
+    passwordInput.value = "";
 
 
-      let message =
-        "Login failed.";
+    setTimeout(function(){
+
+      window.location.replace("admin.html");
+
+    },700);
 
 
-      if (
-        error.code ===
-        "auth/invalid-credential"
-      ){
+  }catch(error){
+
+    console.error(
+      "Admin Login Error:",
+      error
+    );
+
+
+    let message =
+      "Invalid admin email or password.";
+
+
+    switch(error.code){
+
+      case "auth/invalid-credential":
 
         message =
           "Invalid admin email or password.";
 
-      }
-      else if (
-        error.code ===
-        "auth/wrong-password"
-      ){
+        break;
+
+
+      case "auth/wrong-password":
 
         message =
-          "Invalid admin email or password.";
+          "Wrong admin password.";
 
-      }
-      else if (
-        error.code ===
-        "auth/user-not-found"
-      ){
+        break;
+
+
+      case "auth/user-not-found":
 
         message =
-          "Admin account not found in Firebase Authentication.";
+          "Admin account not found in Firebase.";
 
-      }
-      else if (
-        error.code ===
-        "auth/too-many-requests"
-      ){
+        break;
+
+
+      case "auth/invalid-email":
+
+        message =
+          "Invalid admin email.";
+
+        break;
+
+
+      case "auth/too-many-requests":
 
         message =
           "Too many login attempts. Please try again later.";
 
-      }
-      else if(error.message){
+        break;
+
+
+      case "auth/network-request-failed":
 
         message =
-          error.message;
+          "Firebase connection failed. Check your internet.";
 
-      }
-
-
-      showMessage(
-        "❌ " + message
-      );
+        break;
 
 
-      btn.disabled = false;
+      case "auth/user-disabled":
 
-      btn.textContent =
-        "Login as Admin";
+        message =
+          "This Firebase account has been disabled.";
+
+        break;
 
     }
 
+
+    showError(message);
+
+
+    loginBtn.disabled = false;
+
+    loginBtn.textContent =
+      "Login to Admin Panel";
+
   }
-);
+
+});
 
 </script>
 
