@@ -20,464 +20,635 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-const ADMIN_EMAIL =
-  "admin@greatindia.technology";
+/* =========================
+   ADMIN EMAIL
+========================= */
+
+const ADMIN_EMAIL = "indiaeducat482@gmail.com";
 
 
-const $ = id =>
-  document.getElementById(id);
+/* =========================
+   HELPERS
+========================= */
 
+const $ = id => document.getElementById(id);
 
 const esc = x =>
   String(x ?? "").replace(
     /[&<>"']/g,
     c => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#39;"
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
     }[c])
   );
 
 
-async function load(){
+/* =========================
+   LOAD ADMIN DATA
+========================= */
 
-  const usersSnap =
-    await getDocs(
-      collection(db,"users")
-    );
+async function load() {
 
+  try {
 
-  const appsSnap =
-    await getDocs(
-      collection(db,"appHistory")
-    );
+    /* =========================
+       USERS
+    ========================= */
 
-
-  const requestsSnap =
-    await getDocs(
-      query(
-        collection(db,"adminRequests"),
-        where("status","==","pending")
-      )
-    );
+    const usersSnap =
+      await getDocs(
+        collection(db, "users")
+      );
 
 
-  let blocked = 0;
+    /* =========================
+       APPS
+    ========================= */
+
+    const appsSnap =
+      await getDocs(
+        collection(db, "appHistory")
+      );
 
 
-  usersSnap.forEach(x=>{
+    /* =========================
+       UPGRADE REQUESTS
+    ========================= */
 
-    if(x.data().blocked){
-      blocked++;
+    const requestsSnap =
+      await getDocs(
+        query(
+          collection(db, "adminRequests"),
+          where("status", "==", "pending")
+        )
+      );
+
+
+    /* =========================
+       STATS
+    ========================= */
+
+    let blocked = 0;
+
+    usersSnap.forEach(x => {
+
+      const d = x.data();
+
+      if (d.blocked) {
+        blocked++;
+      }
+
+    });
+
+
+    if ($("users")) {
+      $("users").textContent =
+        usersSnap.size;
     }
 
-  });
+    if ($("blocked")) {
+      $("blocked").textContent =
+        blocked;
+    }
+
+    if ($("apps")) {
+      $("apps").textContent =
+        appsSnap.size;
+    }
+
+    if ($("pending")) {
+      $("pending").textContent =
+        requestsSnap.size;
+    }
 
 
-  $("users").textContent =
-    usersSnap.size;
+    /* =========================
+       ALL USERS
+    ========================= */
 
-  $("blocked").textContent =
-    blocked;
+    if ($("usersTable")) {
 
-  $("apps").textContent =
-    appsSnap.size;
+      if (usersSnap.empty) {
 
-  $("pending").textContent =
-    requestsSnap.size;
+        $("usersTable").innerHTML =
+          "<p>No users found.</p>";
 
+      } else {
 
-  /* =========================
-     USERS
-  ========================= */
+        $("usersTable").innerHTML = `
 
-  $("usersTable").innerHTML =
-    usersSnap.empty
-    ?
-    "No users."
-    :
-    `
-    <table class="table">
+          <table class="table">
 
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>UID</th>
-          <th>Status</th>
-          <th>Usage</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
+            <thead>
 
-      <tbody>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>UID</th>
+                <th>Status</th>
+                <th>Usage</th>
+                <th>Actions</th>
+              </tr>
 
-      ${usersSnap.docs.map(x=>{
+            </thead>
 
-        const d=x.data();
+            <tbody>
 
-        return `
-        <tr>
+              ${usersSnap.docs.map(x => {
 
-          <td>
-            ${esc(
-              d.name ||
-              d.fullName ||
-              ""
-            )}
-          </td>
+                const d = x.data();
 
-          <td>
-            ${esc(d.email || "")}
-          </td>
-
-          <td class="muted">
-            ${esc(x.id)}
-          </td>
-
-          <td>
-            ${
-              d.blocked
-              ?
-              "🚫 Blocked"
-              :
-              "✅ Active"
-            }
-          </td>
-
-          <td>
-            ${Number(d.buildCount || 0)}
-            builds
-          </td>
-
-          <td>
-
-            <button
-              class="btn gray"
-              onclick="editUser(
-                '${x.id}',
-                ${JSON.stringify(
+                const name =
                   d.name ||
                   d.fullName ||
-                  ""
-                )}
-              )"
-            >
-              Edit
-            </button>
+                  "";
 
-            <button
-              class="btn ${
-                d.blocked
-                ?
-                "ok"
-                :
-                "warn"
-              }"
-              onclick="toggleBlock(
-                '${x.id}',
-                ${!!d.blocked}
-              )"
-            >
-              ${
-                d.blocked
-                ?
-                "Unblock"
-                :
-                "Block"
-              }
-            </button>
+                const email =
+                  d.email ||
+                  "";
 
-            <button
-              class="btn danger"
-              onclick="deleteUserData(
-                '${x.id}'
-              )"
-            >
-              Delete
-            </button>
+                const buildCount =
+                  Number(
+                    d.buildCount || 0
+                  );
 
-          </td>
+                return `
 
-        </tr>
+                  <tr>
+
+                    <td>
+                      ${esc(name)}
+                    </td>
+
+                    <td>
+                      ${esc(email)}
+                    </td>
+
+                    <td class="muted">
+                      ${esc(x.id)}
+                    </td>
+
+                    <td>
+
+                      ${
+                        d.blocked
+                        ? "🚫 Blocked"
+                        : "✅ Active"
+                      }
+
+                    </td>
+
+                    <td>
+                      ${buildCount} builds
+                    </td>
+
+                    <td>
+
+                      <button
+                        class="btn gray"
+                        onclick='editUser(
+                          ${JSON.stringify(x.id)},
+                          ${JSON.stringify(name)}
+                        )'
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        class="btn ${
+                          d.blocked
+                          ? "ok"
+                          : "warn"
+                        }"
+                        onclick='toggleBlock(
+                          ${JSON.stringify(x.id)},
+                          ${JSON.stringify(!!d.blocked)}
+                        )'
+                      >
+
+                        ${
+                          d.blocked
+                          ? "Unblock"
+                          : "Block"
+                        }
+
+                      </button>
+
+                      <button
+                        class="btn danger"
+                        onclick='deleteUserData(
+                          ${JSON.stringify(x.id)}
+                        )'
+                      >
+                        Delete
+                      </button>
+
+                    </td>
+
+                  </tr>
+
+                `;
+
+              }).join("")}
+
+            </tbody>
+
+          </table>
+
         `;
 
-      }).join("")}
+      }
 
-      </tbody>
-
-    </table>
-    `;
+    }
 
 
-  /* =========================
-     ALL APPS
-  ========================= */
+    /* =========================
+       USER MAP
+    ========================= */
+
+    const userMap = {};
+
+    usersSnap.forEach(u => {
+
+      const d = u.data();
+
+      userMap[u.id] =
+        d.email ||
+        d.name ||
+        d.fullName ||
+        u.id;
+
+    });
 
 
-  if(!$("appsTable")){
-    console.warn(
-      "appsTable element not found"
-    );
-  }else{
+    /* =========================
+       ALL APPS
+    ========================= */
 
-    if(appsSnap.empty){
+    if ($("appsTable")) {
 
-      $("appsTable").innerHTML =
-        "<p>No apps found.</p>";
+      if (appsSnap.empty) {
 
-    }else{
+        $("appsTable").innerHTML =
+          "<p>No apps found.</p>";
 
-      const userMap = {};
+      } else {
 
-      usersSnap.forEach(u=>{
+        $("appsTable").innerHTML = `
 
-        const d=u.data();
+          <table class="table">
 
-        userMap[u.id] =
-          d.email ||
-          d.name ||
-          d.fullName ||
-          u.id;
+            <thead>
 
-      });
+              <tr>
 
+                <th>App</th>
+                <th>User</th>
+                <th>Target URL</th>
+                <th>Status</th>
+                <th>APK</th>
+                <th>Created</th>
+                <th>Action</th>
 
-      $("appsTable").innerHTML = `
+              </tr>
 
-      <table class="table">
+            </thead>
 
-        <thead>
+            <tbody>
 
-          <tr>
-            <th>App</th>
-            <th>User</th>
-            <th>Target URL</th>
-            <th>Status</th>
-            <th>APK</th>
-            <th>Created</th>
-            <th>Action</th>
-          </tr>
+              ${appsSnap.docs.map(x => {
 
-        </thead>
+                const d = x.data();
 
-        <tbody>
-
-        ${appsSnap.docs.map(x=>{
-
-          const d=x.data();
-
-          const date =
-            d.createdAt?.toDate
-            ?
-            d.createdAt.toDate()
-              .toLocaleString()
-            :
-            "";
-
-
-          const apk =
-            d.apkUrl ||
-            d.apk_url ||
-            "";
-
-
-          const status =
-            d.status ||
-            "queued";
-
-
-          return `
-
-          <tr>
-
-            <td>
-              <b>
-                ${esc(
+                const appName =
                   d.name ||
-                  "My App"
-                )}
-              </b>
+                  d.appName ||
+                  "My App";
 
-              <br>
+                const uid =
+                  d.uid ||
+                  d.userId ||
+                  "";
 
-              <span class="muted">
-                ID: ${esc(x.id)}
-              </span>
-            </td>
-
-
-            <td>
-              ${esc(
-                userMap[d.uid] ||
-                d.uid ||
-                "Unknown"
-              )}
-            </td>
-
-
-            <td>
-              <a
-                href="${esc(
+                const targetUrl =
                   d.targetUrl ||
                   d.target_url ||
-                  "#"
-                )}"
-                target="_blank"
-                rel="noopener"
-              >
+                  d.url ||
+                  "";
+
+                const apk =
+                  d.apkUrl ||
+                  d.apk_url ||
+                  d.downloadUrl ||
+                  "";
+
+                const status =
+                  d.status ||
+                  "queued";
+
+                let date = "";
+
+                if (
+                  d.createdAt &&
+                  d.createdAt.toDate
+                ) {
+
+                  date =
+                    d.createdAt
+                      .toDate()
+                      .toLocaleString();
+
+                }
+
+
+                let statusHtml = "";
+
+                const statusLower =
+                  String(status)
+                    .toLowerCase();
+
+
+                if (
+                  statusLower ===
+                  "ready"
+                ) {
+
+                  statusHtml =
+                    "✅ Ready";
+
+                } else if (
+                  statusLower ===
+                  "failed"
+                ) {
+
+                  statusHtml =
+                    "❌ Failed";
+
+                } else {
+
+                  statusHtml =
+                    "⏳ " +
+                    esc(status);
+
+                }
+
+
+                return `
+
+                  <tr>
+
+                    <td>
+
+                      <b>
+                        ${esc(appName)}
+                      </b>
+
+                      <br>
+
+                      <span class="muted">
+                        ID:
+                        ${esc(x.id)}
+                      </span>
+
+                    </td>
+
+
+                    <td>
+
+                      ${esc(
+                        userMap[uid] ||
+                        uid ||
+                        "Unknown"
+                      )}
+
+                    </td>
+
+
+                    <td class="url">
+
+                      ${
+                        targetUrl
+                        ?
+                        `
+                        <a
+                          href="${esc(targetUrl)}"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          ${esc(targetUrl)}
+                        </a>
+                        `
+                        :
+                        "-"
+                      }
+
+                    </td>
+
+
+                    <td>
+                      ${statusHtml}
+                    </td>
+
+
+                    <td>
+
+                      ${
+                        apk
+                        ?
+                        `
+                        <a
+                          class="btn ok"
+                          href="${esc(apk)}"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          Download
+                        </a>
+                        `
+                        :
+                        `
+                        <span class="muted">
+                          Not Ready
+                        </span>
+                        `
+                      }
+
+                    </td>
+
+
+                    <td>
+                      ${esc(date)}
+                    </td>
+
+
+                    <td>
+
+                      <button
+                        class="btn danger"
+                        onclick='deleteApp(
+                          ${JSON.stringify(x.id)}
+                        )'
+                      >
+                        🗑 Delete App
+                      </button>
+
+                    </td>
+
+                  </tr>
+
+                `;
+
+              }).join("")}
+
+            </tbody>
+
+          </table>
+
+        `;
+
+      }
+
+    }
+
+
+    /* =========================
+       UPGRADE REQUESTS
+    ========================= */
+
+    if ($("requests")) {
+
+      if (requestsSnap.empty) {
+
+        $("requests").innerHTML =
+          "<p>No pending requests.</p>";
+
+      } else {
+
+        $("requests").innerHTML =
+
+          requestsSnap.docs.map(x => {
+
+            const d = x.data();
+
+            const requested =
+              Number(
+                d.requestedExtra ||
+                d.extraBuilds ||
+                d.requestedBuilds ||
+                2
+              );
+
+            return `
+
+              <div class="card">
+
+                <b>
+                  ${esc(
+                    d.name ||
+                    "User"
+                  )}
+                </b>
+
+                —
                 ${esc(
-                  d.targetUrl ||
-                  d.target_url ||
+                  d.email ||
                   ""
                 )}
-              </a>
-            </td>
 
+                <br>
 
-            <td>
-              ${
-                String(status)
-                  .toLowerCase()
-                  === "ready"
-                ?
-                "✅ Ready"
-                :
-                String(status)
-                  .toLowerCase()
-                  === "failed"
-                ?
-                "❌ Failed"
-                :
-                "⏳ " +
-                esc(status)
-              }
-            </td>
+                <span class="muted">
 
+                  Requested extra:
+                  ${requested}
 
-            <td>
+                  <br>
 
-              ${
-                apk
-                ?
-                `
-                <a
+                  ${esc(
+                    d.message ||
+                    "Please approve extra APK builds."
+                  )}
+
+                </span>
+
+                <br><br>
+
+                <button
                   class="btn ok"
-                  href="${esc(apk)}"
-                  target="_blank"
-                  rel="noopener"
+                  onclick='approve(
+                    ${JSON.stringify(x.id)},
+                    ${requested}
+                  )'
                 >
-                  Download
-                </a>
-                `
-                :
-                `<span class="muted">
-                   Not Ready
-                 </span>`
-              }
-
-            </td>
+                  Approve
+                </button>
 
 
-            <td>
-              ${esc(date)}
-            </td>
+                <button
+                  class="btn danger"
+                  onclick='reject(
+                    ${JSON.stringify(x.id)}
+                  )'
+                >
+                  Reject
+                </button>
 
+              </div>
 
-            <td>
+            `;
 
-              <button
-                class="btn danger"
-                onclick="deleteApp(
-                  '${x.id}'
-                )"
-              >
-                🗑 Delete App
-              </button>
+          }).join("");
 
-            </td>
+      }
 
-          </tr>
-
-          `;
-
-        }).join("")}
-
-        </tbody>
-
-      </table>
-
-      `;
     }
+
+
+  } catch (e) {
+
+    console.error(
+      "Admin load failed:",
+      e
+    );
+
+
+    const message =
+      esc(
+        e.message ||
+        "Unable to load admin data."
+      );
+
+
+    [
+      "usersTable",
+      "requests",
+      "appsTable"
+    ].forEach(id => {
+
+      if ($(id)) {
+
+        $(id).innerHTML = `
+
+          <p
+            style="
+              color:#c92a2a;
+              font-weight:800;
+            "
+          >
+            ❌ ${message}
+          </p>
+
+        `;
+
+      }
+
+    });
+
   }
 
-
-  /* =========================
-     REQUESTS
-  ========================= */
-
-
-  $("requests").innerHTML =
-    requestsSnap.empty
-    ?
-    "No pending requests."
-    :
-    requestsSnap.docs.map(x=>{
-
-      const d=x.data();
-
-      return `
-      <div class="card">
-
-        <b>
-          ${esc(d.name || "User")}
-        </b>
-
-        —
-        ${esc(d.email || "")}
-
-        <br>
-
-        <span class="muted">
-
-          Requested extra:
-          ${Number(d.requestedExtra || 2)}
-
-          ·
-
-          ${esc(d.message || "")}
-
-        </span>
-
-        <br>
-
-        <button
-          class="btn ok"
-          onclick="approve(
-            '${x.id}',
-            ${Number(
-              d.requestedExtra || 2
-            )}
-          )"
-        >
-          Approve
-        </button>
-
-        <button
-          class="btn danger"
-          onclick="reject(
-            '${x.id}'
-          )"
-        >
-          Reject
-        </button>
-
-      </div>
-      `;
-
-    }).join("");
 }
 
 
@@ -486,47 +657,103 @@ async function load(){
 ========================= */
 
 window.editUser =
-async (uid,current)=>{
+async (
+  uid,
+  currentName
+) => {
 
-  const name =
-    prompt(
-      "User name:",
-      current
+  try {
+
+    const name =
+      prompt(
+        "User name:",
+        currentName || ""
+      );
+
+
+    if (name === null) {
+      return;
+    }
+
+
+    await updateDoc(
+      doc(
+        db,
+        "users",
+        uid
+      ),
+      {
+        name:
+          name.trim(),
+        updatedAt:
+          serverTimestamp()
+      }
     );
 
-  if(name===null)return;
+
+    alert(
+      "✅ User updated."
+    );
 
 
-  await updateDoc(
-    doc(db,"users",uid),
-    {
-      name:name.trim(),
-      updatedAt:serverTimestamp()
-    }
-  );
+    await load();
 
 
-  await load();
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ Update failed: " +
+      e.message
+    );
+
+  }
+
 };
 
 
 /* =========================
-   BLOCK USER
+   BLOCK / UNBLOCK USER
 ========================= */
 
 window.toggleBlock =
-async (uid,blocked)=>{
+async (
+  uid,
+  blocked
+) => {
 
-  await updateDoc(
-    doc(db,"users",uid),
-    {
-      blocked:!blocked,
-      updatedAt:serverTimestamp()
-    }
-  );
+  try {
+
+    await updateDoc(
+      doc(
+        db,
+        "users",
+        uid
+      ),
+      {
+        blocked:
+          !blocked,
+        updatedAt:
+          serverTimestamp()
+      }
+    );
 
 
-  await load();
+    await load();
+
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ Block/Unblock failed: " +
+      e.message
+    );
+
+  }
+
 };
 
 
@@ -535,70 +762,161 @@ async (uid,blocked)=>{
 ========================= */
 
 window.deleteUserData =
-async uid=>{
+async uid => {
 
-  if(
+  if (
     !confirm(
-      "Delete this user's Firestore profile, usage and app history?"
+      "Delete this user's Firestore profile, usage, requests and app history?"
     )
-  )return;
+  ) {
+
+    return;
+
+  }
 
 
-  await deleteDoc(
-    doc(db,"users",uid)
-  );
+  try {
+
+    /* USER */
+
+    try {
+
+      await deleteDoc(
+        doc(
+          db,
+          "users",
+          uid
+        )
+      );
+
+    } catch (e) {
+
+      console.warn(
+        "User delete:",
+        e
+      );
+
+    }
 
 
-  await deleteDoc(
-    doc(db,"usage",uid)
-  );
+    /* USAGE */
+
+    try {
+
+      await deleteDoc(
+        doc(
+          db,
+          "usage",
+          uid
+        )
+      );
+
+    } catch (e) {
+
+      console.warn(
+        "Usage delete:",
+        e
+      );
+
+    }
 
 
-  await deleteDoc(
-    doc(db,"adminRequests",uid)
-  );
+    /* REQUEST */
+
+    try {
+
+      await deleteDoc(
+        doc(
+          db,
+          "adminRequests",
+          uid
+        )
+      );
+
+    } catch (e) {
+
+      console.warn(
+        "Request delete:",
+        e
+      );
+
+    }
 
 
-  const apps =
-    await getDocs(
-      query(
-        collection(db,"appHistory"),
-        where("uid","==",uid)
+    /* APP HISTORY */
+
+    const apps =
+      await getDocs(
+        query(
+          collection(
+            db,
+            "appHistory"
+          ),
+          where(
+            "uid",
+            "==",
+            uid
+          )
+        )
+      );
+
+
+    await Promise.all(
+      apps.docs.map(
+        x =>
+          deleteDoc(x.ref)
       )
     );
 
 
-  await Promise.all(
-    apps.docs.map(
-      x=>deleteDoc(x.ref)
-    )
-  );
+    alert(
+      "✅ User data deleted."
+    );
 
 
-  await load();
+    await load();
+
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ Delete failed: " +
+      e.message
+    );
+
+  }
+
 };
 
 
 /* =========================
-   ⭐ DELETE APP
+   DELETE APP
 ========================= */
 
 window.deleteApp =
-async id=>{
+async id => {
 
-  if(
+  if (
     !confirm(
       "क्या आप इस App को permanently delete करना चाहते हैं?"
     )
-  ){
+  ) {
+
     return;
+
   }
 
 
-  try{
+  try {
 
     await deleteDoc(
-      doc(db,"appHistory",id)
+      doc(
+        db,
+        "appHistory",
+        id
+      )
     );
 
 
@@ -609,7 +927,8 @@ async id=>{
 
     await load();
 
-  }catch(e){
+
+  } catch (e) {
 
     console.error(e);
 
@@ -617,102 +936,171 @@ async id=>{
       "❌ Delete failed: " +
       e.message
     );
+
   }
+
 };
 
 
 /* =========================
-   APPROVE
+   APPROVE REQUEST
 ========================= */
 
 window.approve =
-async (uid,extra)=>{
+async (
+  requestId,
+  extra
+) => {
 
-  const u =
-    doc(db,"usage",uid);
+  try {
 
-  const r =
-    doc(db,"adminRequests",uid);
-
-
-  await runTransaction(
-    db,
-    async tx=>{
-
-      const s =
-        await tx.get(u);
-
-      const d =
-        s.exists()
-        ?
-        s.data()
-        :
-        {
-          count:0,
-          extra:0
-        };
-
-
-      tx.set(
-        u,
-        {
-          uid,
-          count:Number(
-            d.count || 0
-          ),
-          extra:
-            Number(d.extra || 0)
-            + extra,
-          updatedAt:
-            serverTimestamp()
-        },
-        {
-          merge:true
-        }
+    const requestRef =
+      doc(
+        db,
+        "adminRequests",
+        requestId
       );
 
 
-      tx.update(
-        r,
-        {
-          status:"approved",
-          approvedAt:
-            serverTimestamp(),
-          updatedAt:
-            serverTimestamp()
-        }
+    const usageRef =
+      doc(
+        db,
+        "usage",
+        requestId
       );
 
-    }
-  );
+
+    await runTransaction(
+      db,
+      async tx => {
+
+        const usageSnap =
+          await tx.get(
+            usageRef
+          );
 
 
-  await load();
+        const d =
+          usageSnap.exists()
+          ?
+          usageSnap.data()
+          :
+          {
+            count: 0,
+            extra: 0
+          };
+
+
+        tx.set(
+          usageRef,
+          {
+            uid:
+              requestId,
+
+            count:
+              Number(
+                d.count || 0
+              ),
+
+            extra:
+              Number(
+                d.extra || 0
+              ) + Number(extra || 0),
+
+            updatedAt:
+              serverTimestamp()
+
+          },
+          {
+            merge: true
+          }
+        );
+
+
+        tx.update(
+          requestRef,
+          {
+            status:
+              "approved",
+
+            approvedAt:
+              serverTimestamp(),
+
+            updatedAt:
+              serverTimestamp()
+          }
+        );
+
+      }
+    );
+
+
+    alert(
+      "✅ Request approved."
+    );
+
+
+    await load();
+
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ Approve failed: " +
+      e.message
+    );
+
+  }
+
 };
 
 
 /* =========================
-   REJECT
+   REJECT REQUEST
 ========================= */
 
 window.reject =
-async uid=>{
+async requestId => {
 
-  await updateDoc(
-    doc(
-      db,
-      "adminRequests",
-      uid
-    ),
-    {
-      status:"rejected",
-      updatedAt:
-        serverTimestamp()
-    }
-  );
+  try {
+
+    await updateDoc(
+      doc(
+        db,
+        "adminRequests",
+        requestId
+      ),
+      {
+        status:
+          "rejected",
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
 
 
-  await load();
+    alert(
+      "✅ Request rejected."
+    );
+
+
+    await load();
+
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ Reject failed: " +
+      e.message
+    );
+
+  }
+
 };
 
 
@@ -722,22 +1110,44 @@ async uid=>{
 
 onAuthStateChanged(
   auth,
-  async u=>{
+  async user => {
 
-    if(
-      !u ||
+    if (!user) {
+
+      location.href =
+        "admin-login.html";
+
+      return;
+
+    }
+
+
+    const email =
       String(
-        u.email || ""
-      ).toLowerCase()
-      !== ADMIN_EMAIL
-    ){
+        user.email || ""
+      )
+      .trim()
+      .toLowerCase();
+
+
+    if (
+      email !==
+      ADMIN_EMAIL.toLowerCase()
+    ) {
+
+      alert(
+        "❌ Admin access denied."
+      );
 
       location.href =
         "index.html";
 
       return;
+
     }
 
+
+    /* LOAD ADMIN PANEL */
 
     await load();
 
