@@ -7,9 +7,7 @@
 <title>Admin Login | Great India App Builder</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -50,7 +48,7 @@ h1{
   margin:0 0 6px;
 }
 
-p{
+.subtitle{
   color:#697586;
   text-align:center;
 }
@@ -140,7 +138,9 @@ p{
 
   <h1>Admin Login</h1>
 
-  <p>Admin panel access</p>
+  <p class="subtitle">
+    Admin panel access
+  </p>
 
   <div id="msg" class="msg"></div>
 
@@ -155,13 +155,12 @@ p{
       <input
         id="email"
         type="email"
+        value="indiaeducat482@gmail.com"
         autocomplete="username"
         required
-        placeholder="indiaeducat482@gmail.com"
       >
 
     </div>
-
 
     <div class="field">
 
@@ -179,7 +178,6 @@ p{
 
     </div>
 
-
     <button
       id="btn"
       class="btn"
@@ -189,7 +187,6 @@ p{
     </button>
 
   </form>
-
 
   <div class="back">
     <a href="index.html">
@@ -220,54 +217,48 @@ import {
 
 
 /* =========================
-   ADMIN EMAIL
+   AUTHORIZED ADMIN
 ========================= */
 
 const ADMIN_EMAIL =
   "indiaeducat482@gmail.com";
 
 
-/* =========================
-   HELPERS
-========================= */
-
 const $ = id =>
   document.getElementById(id);
 
+
+/* =========================
+   MESSAGE
+========================= */
 
 function showMessage(
   text,
   success = false
 ){
 
-  const msg =
-    $("msg");
+  const msg = $("msg");
 
-  msg.textContent =
-    text;
+  msg.textContent = text;
 
   msg.className =
     success
       ? "msg success"
       : "msg";
 
-  msg.style.display =
-    "block";
+  msg.style.display = "block";
 }
 
 
 /* =========================
-   ALREADY LOGGED-IN ADMIN
+   CHECK CURRENT LOGIN
 ========================= */
 
 onAuthStateChanged(
   auth,
-  async user => {
+  user => {
 
-    if (!user) {
-      return;
-    }
-
+    if (!user) return;
 
     const email =
       String(
@@ -275,7 +266,6 @@ onAuthStateChanged(
       )
       .trim()
       .toLowerCase();
-
 
     if (
       email ===
@@ -292,238 +282,244 @@ onAuthStateChanged(
 
 
 /* =========================
-   LOGIN
+   ADMIN LOGIN
 ========================= */
 
-$("form").onsubmit =
-async e => {
+$("form").addEventListener(
+  "submit",
+  async event => {
 
-  e.preventDefault();
+    event.preventDefault();
 
+    const btn =
+      $("btn");
 
-  const btn =
-    $("btn");
+    const email =
+      $("email")
+        .value
+        .trim()
+        .toLowerCase();
 
-  const email =
-    $("email")
-      .value
-      .trim()
-      .toLowerCase();
-
-  const password =
-    $("password")
-      .value;
-
-
-  /* =========================
-     EMAIL CHECK
-  ========================= */
-
-  if (
-    email !==
-    ADMIN_EMAIL.toLowerCase()
-  ){
-
-    showMessage(
-      "❌ This account is not authorized as admin."
-    );
-
-    return;
-
-  }
-
-
-  btn.disabled =
-    true;
-
-  btn.textContent =
-    "Checking...";
-
-  $("msg").style.display =
-    "none";
-
-
-  try {
-
-    /* =========================
-       FIREBASE LOGIN
-    ========================= */
-
-    const credential =
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-
-    const user =
-      credential.user;
+    const password =
+      $("password")
+        .value;
 
 
     /* =========================
-       FINAL ADMIN EMAIL CHECK
+       EMAIL AUTHORIZATION
     ========================= */
-
-    const loggedEmail =
-      String(
-        user.email || ""
-      )
-      .trim()
-      .toLowerCase();
-
 
     if (
-      loggedEmail !==
+      email !==
       ADMIN_EMAIL.toLowerCase()
     ){
 
-      await signOut(auth);
-
-      throw new Error(
-        "This account is not authorized as admin."
+      showMessage(
+        "❌ This account is not authorized as admin."
       );
+
+      return;
 
     }
 
 
-    /* =========================
-       CHECK USER PROFILE
-    ========================= */
+    if (!password){
+
+      showMessage(
+        "❌ Please enter admin password."
+      );
+
+      return;
+
+    }
+
+
+    btn.disabled = true;
+
+    btn.textContent =
+      "Checking...";
+
+    $("msg").style.display =
+      "none";
+
 
     try {
 
-      const userDoc =
-        await getDoc(
-          doc(
-            db,
-            "users",
-            user.uid
-          )
+      /* =========================
+         FIREBASE AUTH
+      ========================= */
+
+      const result =
+        await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
         );
 
 
+      const user =
+        result.user;
+
+
+      /* =========================
+         FINAL EMAIL CHECK
+      ========================= */
+
+      const loggedEmail =
+        String(
+          user.email || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
       if (
-        userDoc.exists()
-        &&
-        userDoc.data().blocked === true
+        loggedEmail !==
+        ADMIN_EMAIL.toLowerCase()
       ){
 
         await signOut(auth);
 
         throw new Error(
-          "This admin account is blocked."
+          "This account is not authorized as admin."
         );
 
       }
 
-    } catch(profileError){
 
-      /*
-        Firestore profile missing
-        should NOT stop the admin
-        if Firebase Authentication
-        email is the authorized admin.
-      */
+      /* =========================
+         OPTIONAL BLOCK CHECK
+      ========================= */
 
-      console.warn(
-        "Admin profile check:",
-        profileError
+      try {
+
+        const userDoc =
+          await getDoc(
+            doc(
+              db,
+              "users",
+              user.uid
+            )
+          );
+
+
+        if (
+          userDoc.exists() &&
+          userDoc.data().blocked === true
+        ){
+
+          await signOut(auth);
+
+          throw new Error(
+            "This admin account is blocked."
+          );
+
+        }
+
+      } catch(profileError){
+
+        console.warn(
+          "Admin profile check:",
+          profileError
+        );
+
+      }
+
+
+      /* =========================
+         SUCCESS
+      ========================= */
+
+      showMessage(
+        "✅ Admin login successful. Opening Admin Panel...",
+        true
       );
 
+      btn.textContent =
+        "Opening Admin Panel...";
+
+
+      setTimeout(
+        () => {
+
+          location.href =
+            "admin.html";
+
+        },
+        500
+      );
+
+
+    } catch(error){
+
+      console.error(
+        "Admin Login Error:",
+        error
+      );
+
+
+      let message =
+        "Login failed.";
+
+
+      if (
+        error.code ===
+        "auth/invalid-credential"
+      ){
+
+        message =
+          "Invalid admin email or password.";
+
+      }
+      else if (
+        error.code ===
+        "auth/wrong-password"
+      ){
+
+        message =
+          "Invalid admin email or password.";
+
+      }
+      else if (
+        error.code ===
+        "auth/user-not-found"
+      ){
+
+        message =
+          "Admin account not found in Firebase Authentication.";
+
+      }
+      else if (
+        error.code ===
+        "auth/too-many-requests"
+      ){
+
+        message =
+          "Too many login attempts. Please try again later.";
+
+      }
+      else if(error.message){
+
+        message =
+          error.message;
+
+      }
+
+
+      showMessage(
+        "❌ " + message
+      );
+
+
+      btn.disabled = false;
+
+      btn.textContent =
+        "Login as Admin";
+
     }
-
-
-    /* =========================
-       SUCCESS
-    ========================= */
-
-    showMessage(
-      "✅ Admin login successful. Opening Admin Panel...",
-      true
-    );
-
-    btn.textContent =
-      "Opening Admin Panel...";
-
-
-    setTimeout(
-      () => {
-        location.href =
-          "admin.html";
-      },
-      300
-    );
-
-
-  } catch(err){
-
-    console.error(
-      "Admin login error:",
-      err
-    );
-
-
-    let message =
-      err.message ||
-      "Login failed.";
-
-
-    if (
-      err.code ===
-      "auth/invalid-credential"
-    ){
-
-      message =
-        "Invalid admin email or password.";
-
-    }
-
-    else if (
-      err.code ===
-      "auth/wrong-password"
-    ){
-
-      message =
-        "Invalid admin email or password.";
-
-    }
-
-    else if (
-      err.code ===
-      "auth/user-not-found"
-    ){
-
-      message =
-        "Admin account was not found in Firebase Authentication.";
-
-    }
-
-    else if (
-      err.code ===
-      "auth/too-many-requests"
-    ){
-
-      message =
-        "Too many login attempts. Please try again later.";
-
-    }
-
-
-    showMessage(
-      "❌ " + message
-    );
-
-
-    btn.disabled =
-      false;
-
-    btn.textContent =
-      "Login as Admin";
 
   }
-
-};
+);
 
 </script>
 
